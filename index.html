@@ -3,114 +3,246 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Admin | Billify</title>
+    <title>Admin Console | Billify</title>
     <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
-    <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
     <style>
-        :root { --bg: #000; --panel: #09090b; --border: #27272a; --primary: #6366f1; --text: #f4f4f5; --success: #10b981; --danger: #ef4444; }
-        body { margin: 0; font-family: 'Plus Jakarta Sans', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
-
-        .sidebar { width: 260px; background: var(--panel); border-right: 1px solid var(--border); padding: 20px; display: flex; flex-direction: column; }
-        .nav { padding: 12px; margin-bottom: 5px; cursor: pointer; border-radius: 8px; color: #a1a1aa; font-weight: 500; display: flex; gap: 10px; align-items: center; }
-        .nav:hover, .nav.active { background: var(--primary); color: white; }
-
-        .main { flex: 1; padding: 30px; overflow-y: auto; }
-        .page { display: none; animation: fadeIn 0.3s ease; } .page.active { display: block; }
-        @keyframes fadeIn { from{opacity:0;} to{opacity:1;} }
-
-        .card { background: var(--panel); border: 1px solid var(--border); padding: 20px; border-radius: 12px; margin-bottom: 15px; display: flex; justify-content: space-between; align-items: center; }
-        .btn { padding: 8px 12px; border-radius: 6px; border: none; cursor: pointer; color: white; margin-left: 5px; font-weight: 600; transition: 0.2s; }
-        .btn-green { background: var(--success); } .btn-red { background: var(--danger); } .btn-blue { background: var(--primary); }
-        input, select, textarea { background: #000; border: 1px solid var(--border); color: white; padding: 10px; border-radius: 6px; width: 100%; margin-bottom: 10px; outline: none; }
+        :root {
+            --bg: #0f172a; --panel: #1e293b; --border: #334155; 
+            --primary: #6366f1; --primary-hover: #4f46e5;
+            --text: #f8fafc; --text-muted: #94a3b8;
+            --success: #10b981; --danger: #ef4444; --warning: #f59e0b;
+        }
+        body { margin: 0; font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); display: flex; height: 100vh; overflow: hidden; }
         
-        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.85); align-items: center; justify-content: center; z-index: 100; backdrop-filter: blur(5px); }
-        .modal-box { background: var(--panel); width: 600px; padding: 25px; border-radius: 16px; max-height: 90vh; overflow-y: auto; border: 1px solid var(--border); }
-        .modal-sec { background: rgba(255,255,255,0.03); padding: 15px; border-radius: 8px; margin-bottom: 15px; border: 1px solid var(--border); }
+        /* Scrollbar */
+        ::-webkit-scrollbar { width: 6px; height: 6px; }
+        ::-webkit-scrollbar-track { background: var(--bg); }
+        ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 3px; }
+
+        /* Sidebar */
+        .sidebar { width: 260px; background: rgba(30, 41, 59, 0.7); backdrop-filter: blur(12px); border-right: 1px solid var(--border); padding: 24px; display: flex; flex-direction: column; z-index: 20; }
+        .logo { font-size: 1.5rem; font-weight: 700; color: var(--text); margin-bottom: 30px; display: flex; align-items: center; gap: 10px; }
+        .nav-item { padding: 12px 16px; margin-bottom: 4px; border-radius: 8px; color: var(--text-muted); cursor: pointer; display: flex; align-items: center; gap: 12px; font-weight: 500; transition: 0.2s; }
+        .nav-item:hover, .nav-item.active { background: rgba(99, 102, 241, 0.1); color: var(--primary); }
+        .nav-item.active { border-left: 3px solid var(--primary); }
+
+        /* Main Content */
+        .main { flex: 1; padding: 32px; overflow-y: auto; position: relative; scroll-behavior: smooth; }
+        .page { display: none; animation: fadeUp 0.3s ease-out; } 
+        .page.active { display: block; }
+        @keyframes fadeUp { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+
+        /* Components */
+        .header-flex { display: flex; justify-content: space-between; align-items: center; margin-bottom: 24px; }
+        .card { background: var(--panel); border: 1px solid var(--border); border-radius: 12px; padding: 20px; margin-bottom: 16px; transition: 0.2s; position: relative; }
+        .card:hover { border-color: var(--primary); transform: translateY(-2px); box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1); }
+        
+        .btn { padding: 8px 16px; border-radius: 6px; border: none; cursor: pointer; color: white; font-weight: 600; font-size: 0.9rem; transition: 0.2s; display: inline-flex; align-items: center; gap: 6px; }
+        .btn:active { transform: scale(0.96); }
+        .btn-primary { background: var(--primary); } .btn-primary:hover { background: var(--primary-hover); }
+        .btn-success { background: var(--success); } .btn-danger { background: var(--danger); }
+        .btn-outline { background: transparent; border: 1px solid var(--border); color: var(--text-muted); }
+        .btn-outline:hover { border-color: var(--text-muted); color: var(--text); }
+
+        input, select, textarea { background: #020617; border: 1px solid var(--border); color: white; padding: 12px; border-radius: 8px; width: 100%; box-sizing: border-box; outline: none; transition: 0.2s; font-family: inherit; margin-bottom: 10px; }
+        input:focus, select:focus { border-color: var(--primary); box-shadow: 0 0 0 2px rgba(99, 102, 241, 0.2); }
+
+        /* Chat Layout */
+        .chat-container { display: grid; grid-template-columns: 250px 1fr; gap: 20px; height: 70vh; }
+        .user-list { border: 1px solid var(--border); background: var(--panel); border-radius: 12px; overflow-y: auto; }
+        .user-item { padding: 15px; border-bottom: 1px solid var(--border); cursor: pointer; transition: 0.2s; }
+        .user-item:hover, .user-item.active { background: rgba(99, 102, 241, 0.1); }
+        .chat-pane { border: 1px solid var(--border); background: var(--panel); border-radius: 12px; display: flex; flex-direction: column; }
+        .messages { flex: 1; padding: 20px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; }
+        .msg { max-width: 70%; padding: 8px 12px; border-radius: 8px; font-size: 0.9rem; }
+        .msg.user { align-self: flex-start; background: #334155; }
+        .msg.admin { align-self: flex-end; background: var(--primary); }
+
+        /* Badges */
+        .badge { padding: 4px 8px; border-radius: 20px; font-size: 0.75rem; font-weight: 600; text-transform: uppercase; }
+        .bg-pending { background: rgba(245, 158, 11, 0.1); color: var(--warning); border: 1px solid rgba(245, 158, 11, 0.2); }
+        .bg-active { background: rgba(16, 185, 129, 0.1); color: var(--success); border: 1px solid rgba(16, 185, 129, 0.2); }
+        .bg-expired { background: rgba(239, 68, 68, 0.1); color: var(--danger); border: 1px solid rgba(239, 68, 68, 0.2); }
+
+        /* Modal */
+        .modal { display: none; position: fixed; inset: 0; background: rgba(0,0,0,0.7); backdrop-filter: blur(4px); z-index: 100; align-items: center; justify-content: center; opacity: 0; transition: opacity 0.3s; }
+        .modal.visible { opacity: 1; }
+        .modal-box { background: var(--panel); width: 600px; max-width: 90%; max-height: 90vh; overflow-y: auto; padding: 24px; border-radius: 16px; border: 1px solid var(--border); box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5); transform: scale(0.95); transition: transform 0.3s; }
+        .modal.visible .modal-box { transform: scale(1); }
+
+        /* Skeleton & Loader */
+        .skeleton { height: 60px; background: linear-gradient(90deg, var(--panel) 25%, var(--border) 50%, var(--panel) 75%); background-size: 200% 100%; animation: shimmer 1.5s infinite; border-radius: 8px; margin-bottom: 10px; }
+        @keyframes shimmer { 0% { background-position: 200% 0; } 100% { background-position: -200% 0; } }
+        
+        #global-loader { position: fixed; inset: 0; background: var(--bg); z-index: 9999; display: flex; align-items: center; justify-content: center; transition: opacity 0.5s; }
+        .spinner { width: 40px; height: 40px; border: 3px solid rgba(255,255,255,0.1); border-radius: 50%; border-top-color: var(--primary); animation: spin 1s linear infinite; }
+        @keyframes spin { to { transform: rotate(360deg); } }
+
+        /* Specific Layouts */
+        .grid-stats { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 16px; margin-bottom: 24px; }
+        .user-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 16px; }
     </style>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-app-compat.js"></script>
     <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-database-compat.js"></script>
+    <script src="https://www.gstatic.com/firebasejs/9.6.1/firebase-storage-compat.js"></script>
 </head>
 <body>
 
+    <div id="global-loader"><div class="spinner"></div></div>
+
     <div class="sidebar">
-        <h2 style="color:var(--primary); margin-top:0;">Billify Admin</h2>
-        <div class="nav active" onclick="tab('orders')">Orders</div>
-        <div class="nav" onclick="tab('renewals')">Renewals</div>
-        <div class="nav" onclick="tab('support')">Support</div>
-        <div class="nav" onclick="tab('users')">Users</div>
-        <div class="nav" onclick="tab('plans')">Plans</div>
-        <div class="nav" onclick="tab('designs')">Designs</div>
-        <div class="nav" onclick="tab('settings')">Settings</div>
+        <div class="logo"><i class="fa-solid fa-bolt" style="color:var(--primary)"></i> Billify Admin</div>
+        <div class="nav-item active" onclick="tab('orders')"><i class="fa-solid fa-receipt"></i> Orders <span id="badge-orders" class="badge bg-pending" style="margin-left:auto; display:none">0</span></div>
+        <div class="nav-item" onclick="tab('renewals')"><i class="fa-solid fa-clock-rotate-left"></i> Renewals</div>
+        <div class="nav-item" onclick="tab('themes')"><i class="fa-solid fa-palette"></i> Themes</div>
+        <div class="nav-item" onclick="tab('support')"><i class="fa-solid fa-headset"></i> Support</div>
+        <div class="nav-item" onclick="tab('users')"><i class="fa-solid fa-users"></i> Users</div>
+        <div class="nav-item" onclick="tab('plans')"><i class="fa-solid fa-tags"></i> Plans</div>
+        <div class="nav-item" onclick="tab('expiry')"><i class="fa-solid fa-calendar-xmark"></i> Expiry</div> 
+        <div class="nav-item" onclick="tab('settings')"><i class="fa-solid fa-gear"></i> Settings</div>
     </div>
 
     <div class="main">
+        
         <div id="pg-orders" class="page active">
-            <h2>Orders</h2>
-            <input id="order-search" placeholder="Search User or Order ID..." onkeyup="filterOrders()">
-            <div id="order-list">Loading...</div>
+            <div class="header-flex">
+                <h2>Pending Orders</h2>
+                <button class="btn btn-outline" onclick="exportData('orders')"><i class="fa-solid fa-download"></i> CSV</button>
+            </div>
+            <input id="order-search" placeholder="Search Order ID, User, or Txn..." onkeyup="filterOrders()">
+            <div id="order-list"><div class="skeleton"></div><div class="skeleton"></div></div>
         </div>
         
-        <div id="pg-renewals" class="page"><h2>Renewals</h2><div id="renewal-list">Loading...</div></div>
+        <div id="pg-renewals" class="page">
+            <h2>Renewal History</h2>
+            <div id="renewal-list"><div class="skeleton"></div></div>
+        </div>
 
-        <div id="pg-support" class="page"><h2>Support Inbox</h2><div id="support-list">Loading...</div></div>
+        <div id="pg-support" class="page">
+            <h2>Support Chat</h2>
+            <div class="chat-container">
+                <div class="user-list" id="chat-users"></div>
+                <div class="chat-pane" id="chat-pane" style="display:none;">
+                    <div style="padding:15px; border-bottom:1px solid var(--border); font-weight:700" id="chat-header">User</div>
+                    <div class="messages" id="chat-msgs"></div>
+                    <div style="padding:15px; display:flex; gap:10px;">
+                        <input id="chat-reply" placeholder="Type reply..." style="margin:0;">
+                        <button class="btn btn-primary" onclick="sendReply()">Send</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div id="pg-themes" class="page">
+            <h2>Theme Management</h2>
+            
+            <div style="display:grid; grid-template-columns: 1fr 2fr; gap:20px;">
+                <div>
+                    <h4>Categories</h4>
+                    <div class="card">
+                        <input id="cat-name" placeholder="Category Name">
+                        <input id="cat-img" placeholder="Cover Image URL">
+                        <button class="btn btn-primary" onclick="addCategory()">Add Category</button>
+                    </div>
+                    <div id="cat-list"></div>
+                </div>
+                <div>
+                    <h4>Themes</h4>
+                    <div class="card">
+                        <input id="th-name" placeholder="Theme Name">
+                        <select id="th-cat"></select>
+                        <input type="file" id="th-file" style="margin-bottom:10px;">
+                        <input id="th-demo" placeholder="Demo URL">
+                        <textarea id="th-desc" placeholder="Description" style="width:100%; height:80px;"></textarea>
+                        <button class="btn btn-primary" onclick="addTheme()">Upload & Add Theme</button>
+                    </div>
+                    <div id="theme-list"></div>
+                </div>
+            </div>
+        </div>
 
         <div id="pg-users" class="page">
-            <h2>User Manager</h2>
-            <input id="user-search" placeholder="Search..." onkeyup="searchUsers()">
-            <div id="user-list">Loading...</div>
+            <div class="header-flex">
+                <h2>User Management</h2>
+                <div style="display:flex; gap:10px;">
+                    <button class="btn btn-outline" onclick="loadUsers()"><i class="fa-solid fa-rotate"></i> Refresh</button>
+                    <button class="btn btn-outline" onclick="exportData('users')"><i class="fa-solid fa-download"></i> CSV</button>
+                </div>
+            </div>
+            <div class="header-flex">
+                <input id="user-search" placeholder="Search Username, Name or Mobile..." onkeyup="debounce(searchUsers, 300)()" style="max-width:300px; margin:0;">
+                <span id="user-count" style="color:var(--text-muted); font-size:0.9rem;">Loading...</span>
+            </div>
+            <div id="user-list" class="user-grid"><div class="skeleton"></div></div>
         </div>
 
         <div id="pg-plans" class="page">
-            <h2>Plans</h2>
-            <div class="card" style="display:block;">
-                <h4>Add Plan</h4>
-                <input id="pl-n" placeholder="Name">
-                <div style="display:flex; gap:10px;"><input id="pl-p" placeholder="Price"><input id="pl-d" placeholder="Days"></div>
-                <textarea id="pl-desc" placeholder="Desc" rows="2"></textarea>
-                <button class="btn btn-green" onclick="addPlan()">Add</button>
+            <h2>Membership Plans</h2>
+            <div class="card">
+                <h4>Create Plan</h4>
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:10px;">
+                    <input id="pl-n" placeholder="Plan Name">
+                    <input id="pl-p" placeholder="Price (₹)">
+                </div>
+                <div style="display:grid; grid-template-columns: 1fr 3fr; gap:10px;">
+                    <input id="pl-d" placeholder="Duration (Days)">
+                    <input id="pl-desc" placeholder="Description">
+                </div>
+                <button class="btn btn-primary" onclick="addPlan()">Add Plan</button>
             </div>
-            <div id="plan-list"></div>
+            <div id="plan-list"><div class="skeleton"></div></div>
         </div>
 
-        <div id="pg-designs" class="page">
-            <h2>Designs & Categories</h2>
-            
-            <div class="card" style="display:block; border-left:3px solid var(--primary);">
-                <h4 style="margin-top:0">1. Add Category</h4>
-                <div style="display:flex; gap:10px;">
-                    <input id="cat-n" placeholder="Category Name (e.g. E-Commerce)">
-                    <input id="cat-img" placeholder="Cover Image URL">
-                </div>
-                <button class="btn btn-blue" onclick="addCategory()">Add Category</button>
-            </div>
-
-            <div class="card" style="display:block; border-left:3px solid var(--success);">
-                <h4 style="margin-top:0">2. Add Theme</h4>
-                <select id="th-cat-sel"><option>Loading categories...</option></select>
-                <input id="th-n" placeholder="Theme Name">
-                <div style="display:flex; gap:10px;">
-                    <input id="th-img" placeholder="Preview Image URL">
-                    <input id="th-url" placeholder="Demo URL">
-                </div>
-                <button class="btn btn-green" onclick="addTheme()">Add Theme</button>
-            </div>
-
-            <h3 style="margin-top:30px;">All Categories</h3>
-            <div id="cat-list"></div>
-            
-            <h3 style="margin-top:30px;">All Themes</h3>
-            <div id="theme-list"></div>
+        <div id="pg-expiry" class="page">
+            <h2>Subscriptions Monitoring</h2>
+            <p style="color:var(--text-muted); font-size:0.9rem">Sorted by urgency. <span style="color:var(--danger)">Red</span> = Less than 5 days left.</p>
+            <input id="expiry-search" placeholder="Filter by user or site..." onkeyup="debounce(filterExpiry, 300)()">
+            <div id="expiry-list"><div class="skeleton"></div></div>
         </div>
 
-        <div id="pg-settings" class="page"><h2>Settings</h2><input id="set-qr" placeholder="QR URL"><input id="set-auto" placeholder="Free Trial URL"><button class="btn btn-green" onclick="saveSet()">Save</button></div>
+        <div id="pg-settings" class="page">
+            <h2>System Settings</h2>
+            <div class="card" style="max-width:500px;">
+                <label>Payment QR Code URL</label>
+                <input id="set-qr" placeholder="https://...">
+                <label>Auto-Deploy Free Trial URL</label>
+                <input id="set-auto" placeholder="https://...">
+                <button class="btn btn-success" onclick="saveSet()">Save Settings</button>
+            </div>
+        </div>
     </div>
 
     <div id="user-modal" class="modal">
         <div class="modal-box">
-            <div style="display:flex; justify-content:space-between; margin-bottom:15px;"><h2>Manage</h2><button class="btn btn-red" onclick="closeModal()">X</button></div>
-            <div id="m-profile" style="margin-bottom:15px; color:#9ca3af;"></div>
-            <div class="modal-sec"><h4>Gift Sub</h4><select id="gift-plan"></select><div style="display:flex; gap:10px;"><input id="gift-site" placeholder="Site"><input id="gift-url" placeholder="URL"></div><button class="btn btn-green" style="width:100%" onclick="giftSub()">Gift</button></div>
-            <div class="modal-sec"><h4>Websites</h4><div id="m-webs"></div></div>
+            <div class="header-flex">
+                <h3 style="margin:0">Manage User</h3>
+                <button class="btn btn-danger" style="padding:4px 10px;" onclick="closeModal()">X</button>
+            </div>
+            <div id="m-profile" style="background:rgba(255,255,255,0.05); padding:15px; border-radius:8px; margin-bottom:20px; color:var(--text-muted);"></div>
+            
+            <div style="margin-bottom:20px;">
+                <h4 style="margin-bottom:10px; border-bottom:1px solid var(--border); padding-bottom:5px;">Active Subscriptions</h4>
+                <div id="m-subs-list"></div>
+            </div>
+
+            <div style="margin-bottom:20px; border-top:1px solid var(--border); padding-top:15px;">
+                <h4>Gift Subscription</h4>
+                <div style="display:flex; gap:10px;">
+                    <select id="gift-plan" style="flex:1"></select>
+                    <input id="gift-d" placeholder="Days" style="width:80px">
+                </div>
+                <div style="display:flex; gap:10px;">
+                    <input id="gift-site" placeholder="Site Name">
+                    <input id="gift-url" placeholder="Site URL">
+                </div>
+                <button class="btn btn-success" style="width:100%" onclick="giftSub()">Gift Subscription</button>
+            </div>
+
+            <div>
+                <h4>Websites Registry</h4>
+                <div id="m-webs"></div>
+            </div>
         </div>
     </div>
 
@@ -118,81 +250,288 @@
         const firebaseConfig = { apiKey: "AIzaSyCX5qpT_ytgJjRk21-VWZ-Ndhbq0hhjXYo", authDomain: "fir-integration-61a1f.firebaseapp.com", databaseURL: "https://fir-integration-61a1f-default-rtdb.firebaseio.com", projectId: "fir-integration-61a1f", storageBucket: "fir-integration-61a1f.firebasestorage.app", messagingSenderId: "178334018866", appId: "1:178334018866:web:ef78bc307549639d0ebb2b" };
         firebase.initializeApp(firebaseConfig);
         const db = firebase.database();
-        let allUsers=[], currentUid=null;
+        const storage = firebase.storage();
+        
+        let allUsers=[], currentUid=null, pendingOrdersCount=0, currentChatUser=null;
+        let allThemes=[]; // For dropdowns
 
-        function tab(id){ document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); document.querySelectorAll('.nav').forEach(n=>n.classList.remove('active')); document.getElementById('pg-'+id).classList.add('active'); }
+        window.addEventListener('load', () => { setTimeout(()=>document.getElementById('global-loader').style.opacity='0', 500); setTimeout(()=>document.getElementById('global-loader').remove(), 1000); loadUsers(); initModules(); });
 
-        // ORDERS (Shows Selected Theme)
-        db.ref('subscriptions').orderByChild('status').equalTo('pending').on('value',s=>{
-            const e=document.getElementById('order-list'); e.innerHTML='';
-            if(s.exists()){
-                s.forEach(c=>{
-                    const o=c.val();
-                    e.innerHTML+=`<div class="card order-card" data-search="${o.name.toLowerCase()} ${o.orderId?.toLowerCase()}">
-                        <div>
-                            <b style="color:var(--primary)">${o.orderId||'N/A'}</b><br>
-                            ${o.planName} (${o.price}) - ${o.name}<br>
-                            <span style="color:var(--success)">Theme: ${o.selectedDesign||'Standard'}</span><br>
-                            Txn: ${o.txnId}
-                        </div>
-                        <div><button class="btn btn-green" onclick="approve('${c.key}',${o.durationDays},'${o.uid}','${o.websiteName}')">Approve</button> <button class="btn btn-red" onclick="if(confirm('Reject?')) db.ref('subscriptions/'+c.key).remove()">Reject</button></div>
-                    </div>`;
-                });
-            } else e.innerHTML='<p style="color:#666">No pending orders.</p>';
-        });
-        function filterOrders(){ const q=document.getElementById('order-search').value.toLowerCase(); document.querySelectorAll('.order-card').forEach(c=>c.style.display=c.dataset.search.includes(q)?'flex':'none'); }
-        function approve(k,d,uid,name){ const u=prompt("URL:"); if(u){ db.ref('subscriptions/'+k).update({status:'active',websiteUrl:u,expiryDate:Date.now()+(d*86400000)}); db.ref('websites').push({owner:uid,name:name,url:u,status:'live'}); } }
-
-        // DESIGNS (Categories & Themes)
-        function addCategory(){ db.ref('categories').push({name:document.getElementById('cat-n').value, image:document.getElementById('cat-img').value}); }
-        function addTheme(){ 
-            const cat = document.getElementById('th-cat-sel').value;
-            db.ref('themes').push({name:document.getElementById('th-n').value, image:document.getElementById('th-img').value, url:document.getElementById('th-url').value, categoryId:cat}); 
+        function tab(id){ 
+            document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); 
+            document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active')); 
+            document.getElementById('pg-'+id).classList.add('active'); 
+            const icons = ['orders','renewals','themes','support','users','plans','expiry','settings'];
+            const idx = icons.indexOf(id);
+            if(idx > -1) document.querySelectorAll('.nav-item')[idx].classList.add('active');
         }
+
+        function initModules(){ loadThemeCats(); loadThemesList(); loadSupportUsers(); }
+
+        // --- 1. ORDERS & RENEWALS ---
+        db.ref('subscriptions').on('value', s => {
+            const e = document.getElementById('order-list'); e.innerHTML='';
+            pendingOrdersCount=0;
+            if(s.exists()){
+                const arr=[]; s.forEach(c => { arr.push({key:c.key,...c.val()}); });
+                arr.sort((a,b)=>(b.orderDate||0)-(a.orderDate||0)); 
+                arr.forEach(o => {
+                    if(o.status === 'pending') {
+                        pendingOrdersCount++;
+                        e.innerHTML += `
+                        <div class="card order-item" data-search="${(o.orderId+o.name+o.txnId).toLowerCase()}">
+                            <div style="display:flex; justify-content:space-between;">
+                                <div>
+                                    <span class="badge bg-pending">Pending</span> <b style="color:var(--primary)">${o.orderId||'ID-Error'}</b><br>
+                                    <div style="margin-top:5px; font-size:1.1rem; font-weight:600;">${o.websiteName}</div>
+                                    <small style="color:var(--text-muted)">User: ${o.name} | Plan: ${o.planName} (₹${o.price})</small>
+                                    <br><small style="color:#a855f7">Design: ${o.selectedThemeName||'Standard'}</small>
+                                </div>
+                                <div style="text-align:right">
+                                    <div style="font-size:0.9rem; color:var(--text-muted);">${new Date(o.orderDate).toLocaleDateString()}</div>
+                                    <div style="margin-top:5px;">Txn: <b style="color:white">${o.txnId}</b></div>
+                                </div>
+                            </div>
+                            <div style="display:flex; justify-content:flex-end; gap:10px; margin-top:15px;">
+                                <button class="btn btn-success" onclick="approve('${o.key}',${o.durationDays},'${o.uid}','${o.websiteName}')"><i class="fa-solid fa-check"></i> Approve</button>
+                                <button class="btn btn-danger" onclick="rejectOrder('${o.key}')"><i class="fa-solid fa-xmark"></i> Reject</button>
+                            </div>
+                        </div>`;
+                    }
+                });
+            }
+            if(pendingOrdersCount===0) e.innerHTML = '<div style="text-align:center; padding:40px; color:var(--text-muted)">No pending orders.</div>';
+            updateBadges();
+        });
+
+        // RENEWALS LOG
+        db.ref('renewals_log').on('value', s=>{
+            const r = document.getElementById('renewal-list'); r.innerHTML='';
+            if(s.exists()){
+                const arr=[]; s.forEach(c=>arr.push(c.val()));
+                arr.reverse().forEach(x=>{
+                    r.innerHTML+=`<div class="card"><div style="display:flex; justify-content:space-between;"><b>${x.websiteName}</b> <span>${new Date(x.renewalDate).toLocaleDateString()}</span></div><div style="color:var(--text-muted); margin-top:5px;">User: ${x.uid} | Plan: ${x.plan}</div><div style="margin-top:5px; font-size:0.9rem;">New Expiry: <span style="color:var(--success)">${new Date(x.newExpiry).toDateString()}</span> | Txn: ${x.txnId}</div></div>`;
+                });
+            }
+        });
+
+        function approve(k,d,uid,name){
+            const u = prompt("Enter Website URL (https://...):");
+            if(u){
+                db.ref('subscriptions/'+k).update({ status:'active', websiteUrl:u, expiryDate:Date.now()+(d*86400000) });
+                db.ref('websites').push({ owner:uid, name:name, url:u, status:'live' });
+                logAdminAction('Approved Order', `Key: ${k}, URL: ${u}`);
+            }
+        }
+        function rejectOrder(k){ if(confirm("Reject this order permanently?")){ db.ref('subscriptions/'+k).remove(); logAdminAction('Rejected Order', k); } }
+        function filterOrders(){ const q=document.getElementById('order-search').value.toLowerCase(); document.querySelectorAll('.order-item').forEach(el=>el.style.display=el.dataset.search.includes(q)?'block':'none'); }
+
+        // --- 2. THEMES & CATEGORIES ---
+        function addCategory(){
+            const n=document.getElementById('cat-name').value, i=document.getElementById('cat-img').value;
+            if(!n) return alert("Name required");
+            db.ref('themeCategories').push({name:n, image:i});
+            document.getElementById('cat-name').value='';
+        }
+        function loadThemeCats(){
+            db.ref('themeCategories').on('value',s=>{
+                const c=document.getElementById('cat-list'); const sel=document.getElementById('th-cat');
+                c.innerHTML=''; sel.innerHTML='';
+                if(s.exists()) s.forEach(d=>{
+                    c.innerHTML+=`<div class="card" style="padding:10px; display:flex; justify-content:space-between;">${d.val().name} <button class="btn btn-danger" style="padding:2px 8px; width:auto;" onclick="db.ref('themeCategories/${d.key}').remove()">X</button></div>`;
+                    sel.innerHTML+=`<option value="${d.key}">${d.val().name}</option>`;
+                });
+            });
+        }
+        async function addTheme(){
+            const n=document.getElementById('th-name').value, c=document.getElementById('th-cat').value, d=document.getElementById('th-demo').value, desc=document.getElementById('th-desc').value;
+            const file = document.getElementById('th-file').files[0];
+            if(!n || !c || !file) return alert("Missing fields");
+
+            const ref = storage.ref('themes/'+Date.now()+'-'+file.name);
+            await ref.put(file);
+            const url = await ref.getDownloadURL();
+
+            db.ref('themes').push({name:n, categoryId:c, demoUrl:d, description:desc, screenshot:url});
+            alert("Theme Added");
+        }
+        function loadThemesList(){
+            db.ref('themes').on('value',s=>{
+                const t=document.getElementById('theme-list'); t.innerHTML='';
+                allThemes = []; // Reset global list for dropdowns
+                if(s.exists()) s.forEach(d=>{
+                    allThemes.push({id: d.key, name: d.val().name});
+                    t.innerHTML+=`<div class="card" style="display:flex; gap:10px;"><img src="${d.val().screenshot}" style="width:60px; height:60px; object-fit:cover; border-radius:6px;"><div><b>${d.val().name}</b><br><small onclick="db.ref('themes/${d.key}').remove()" style="color:var(--danger); cursor:pointer;">Delete</small></div></div>`;
+                });
+            });
+        }
+
+        // --- 3. SUPPORT CHAT ---
+        function loadSupportUsers(){
+            db.ref('supportChats').on('value', s=>{
+                const u=document.getElementById('chat-users'); u.innerHTML='';
+                if(s.exists()){
+                    s.forEach(c=>{
+                        const v=c.val();
+                        u.innerHTML+=`<div class="user-item" onclick="openChat('${c.key}')"><b>${v.username||c.key}</b><br><small style="color:var(--text-muted)">${new Date(v.lastTime).toLocaleTimeString()}</small></div>`;
+                    });
+                }
+            });
+        }
+        function openChat(uid){
+            currentChatUser = uid;
+            document.getElementById('chat-pane').style.display='flex';
+            document.getElementById('chat-header').innerText = "Chat with " + uid;
+            db.ref(`supportChats/${uid}/messages`).limitToLast(50).on('value', s=>{
+                const m=document.getElementById('chat-msgs'); m.innerHTML='';
+                if(s.exists()) s.forEach(c=>{
+                    const msg = c.val();
+                    m.innerHTML+=`<div class="msg ${msg.sender}">${msg.text}</div>`;
+                });
+                m.scrollTop = m.scrollHeight;
+            });
+        }
+        function sendReply(){
+            const txt = document.getElementById('chat-reply').value;
+            if(!txt || !currentChatUser) return;
+            db.ref(`supportChats/${currentChatUser}/messages`).push({sender:'admin', text:txt, timestamp:Date.now()});
+            document.getElementById('chat-reply').value='';
+        }
+
+        // --- 4. USERS ---
+        function loadUsers(){
+            const e = document.getElementById('user-list');
+            e.innerHTML = '<div class="skeleton"></div><div class="skeleton"></div>';
+            db.ref('users').once('value', s => {
+                allUsers = [];
+                if(s.exists()){ s.forEach(c => { allUsers.push({ key:c.key, ...c.val() }); }); allUsers.sort((a,b) => (b.online?1:0) - (a.online?1:0)); }
+                document.getElementById('user-count').innerText = `${allUsers.length} Users Found`;
+                renderUsers(allUsers);
+            });
+        }
+        function renderUsers(list){
+            const e = document.getElementById('user-list'); e.innerHTML='';
+            if(list.length === 0) { e.innerHTML='<div style="grid-column:1/-1; text-align:center; padding:20px;">No users found.</div>'; return; }
+            list.forEach(u => {
+                const p = u.profile || {};
+                const online = u.online ? '<span style="width:8px; height:8px; background:var(--success); border-radius:50%; display:inline-block; margin-right:5px;"></span>' : '<span style="width:8px; height:8px; background:#64748b; border-radius:50%; display:inline-block; margin-right:5px;"></span>';
+                e.innerHTML += `<div class="card" style="display:flex; flex-direction:column; justify-content:space-between;"><div><div style="display:flex; justify-content:space-between; align-items:flex-start;"><div>${online} <b style="color:var(--primary)">${u.username || u.key}</b></div>${u.profile?.payName ? '<i class="fa-solid fa-id-card" style="color:var(--text-muted)" title="Profile Set"></i>' : ''}</div><div style="margin-top:10px; font-size:0.9rem; color:var(--text-muted);">Name: ${p.name || '-'}<br>Mob: ${p.mobile || '-'}<br>Pass: ${u.password}</div></div><button class="btn btn-outline" style="width:100%; margin-top:15px; justify-content:center;" onclick="openUser('${u.key}')">Manage User</button></div>`;
+            });
+        }
+        function searchUsers(){ const q = document.getElementById('user-search').value.toLowerCase(); const filtered = allUsers.filter(u => u.key.toLowerCase().includes(q) || (u.profile?.name||'').toLowerCase().includes(q) || (u.profile?.mobile||'').includes(q)); renderUsers(filtered); }
+
+        // --- 5. MODALS & EDITING (UPDATED FOR THEMES) ---
+        async function openUser(uid){
+            currentUid = uid;
+            const m = document.getElementById('user-modal'); m.style.display = 'flex'; setTimeout(()=>m.classList.add('visible'), 10);
+            const u = allUsers.find(x => x.key === uid);
+            document.getElementById('m-profile').innerHTML = `<b>${u.key}</b> | Pass: ${u.password}<br>Email: ${u.profile?.email || 'N/A'}`;
+            const p = await db.ref('plans').get();
+            const s = document.getElementById('gift-plan'); s.innerHTML='';
+            if(p.exists()) p.forEach(c => s.innerHTML+=`<option value="${c.val().name}">${c.val().name}</option>`);
+            loadUserSubs(uid);
+            db.ref('websites').orderByChild('owner').equalTo(uid).on('value', s => {
+                const w = document.getElementById('m-webs'); w.innerHTML='';
+                if(s.exists()) s.forEach(c => w.innerHTML+=`<div style="display:flex; justify-content:space-between; background:#000; padding:8px; margin-bottom:5px; border-radius:6px;">${c.val().name} <a href="${c.val().url}" target="_blank" style="color:var(--primary)">Open</a></div>`);
+            });
+        }
+        function loadUserSubs(uid){
+            db.ref('subscriptions').orderByChild('uid').equalTo(uid).on('value', s => {
+                const d = document.getElementById('m-subs-list'); d.innerHTML='';
+                if(s.exists()){
+                    s.forEach(c => {
+                        const sub = c.val();
+                        const dateVal = new Date(sub.expiryDate).toISOString().split('T')[0];
+                        // Dropdown logic for themes
+                        let themeOpts = `<option value="${sub.selectedThemeId}" selected>${sub.selectedThemeName || 'Standard'}</option>`;
+                        allThemes.forEach(t => { if(t.id !== sub.selectedThemeId) themeOpts += `<option value="${t.id}">${t.name}</option>`; });
+                        
+                        d.innerHTML += `
+                        <div style="border:1px solid var(--border); padding:10px; border-radius:8px; margin-bottom:10px;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                <b>${sub.websiteName}</b>
+                                <span class="badge ${sub.status==='active'?'bg-active':'bg-expired'}">${sub.status}</span>
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-bottom:5px;">
+                                <input value="${sub.websiteUrl||''}" id="url-${c.key}" placeholder="URL">
+                                <input type="date" value="${dateVal}" id="dt-${c.key}">
+                            </div>
+                            <div style="display:flex; gap:5px;">
+                                <select id="th-${c.key}" style="margin:0">${themeOpts}</select>
+                                <button class="btn btn-primary" style="font-size:0.8rem; width:80px;" onclick="updateSub('${c.key}')">Save</button>
+                            </div>
+                        </div>`;
+                    });
+                } else d.innerHTML = '<small>No subscriptions found.</small>';
+            });
+        }
+        function updateSub(k){ 
+            const u = document.getElementById('url-'+k).value; 
+            const d = document.getElementById('dt-'+k).value; 
+            const tId = document.getElementById('th-'+k).value;
+            const tSel = document.getElementById('th-'+k);
+            const tName = tSel.options[tSel.selectedIndex].text;
+
+            const ts = new Date(d).getTime() + 43200000; 
+            db.ref('subscriptions/'+k).update({ websiteUrl:u, expiryDate:ts, selectedThemeId: tId, selectedThemeName: tName }); 
+            alert("Updated!"); 
+            logAdminAction('Updated Subscription', `Key: ${k}, Date: ${d}, Theme: ${tName}`); 
+        }
+        function giftSub(){
+            const n = document.getElementById('gift-plan').value; const d = document.getElementById('gift-d').value || 30; const s = document.getElementById('gift-site').value; const u = document.getElementById('gift-url').value || '#';
+            if(!s) return alert("Site Name Required");
+            db.ref('subscriptions').push({ uid: currentUid, name: 'Gifted', planName: n, price: 0, durationDays: d, websiteName: s, websiteUrl: u, status: 'active', expiryDate: Date.now() + (d * 86400000), orderDate: Date.now(), orderId: 'GIFT-'+Math.floor(Math.random()*10000), selectedThemeName: 'Standard', selectedThemeId: 'default' });
+            alert("Gifted Successfully"); logAdminAction('Gifted Sub', `User: ${currentUid}, Plan: ${n}`);
+        }
+        function closeModal(){ document.getElementById('user-modal').classList.remove('visible'); setTimeout(()=>document.getElementById('user-modal').style.display='none', 300); }
+
+        // --- 6. EXTRAS & EXPIRY MONITORING ---
+        function updateBadges(){ const b1 = document.getElementById('badge-orders'); b1.style.display = pendingOrdersCount > 0 ? 'inline-block' : 'none'; b1.innerText = pendingOrdersCount; }
+        function debounce(func, wait) { let timeout; return function(...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); }; }
+        function logAdminAction(action, detail){ db.ref('admin_logs').push({ action:action, details:detail, timestamp:Date.now() }); }
+        function addPlan(){ db.ref('plans').push({name:document.getElementById('pl-n').value, price:document.getElementById('pl-p').value, days:document.getElementById('pl-d').value, desc:document.getElementById('pl-desc').value}); document.getElementById('pl-n').value=''; }
+        db.ref('plans').on('value', s=>{ document.getElementById('plan-list').innerHTML=''; if(s.exists()) s.forEach(c=>document.getElementById('plan-list').innerHTML+=`<div class="card" style="display:flex; justify-content:space-between"><b>${c.val().name}</b><button class="btn btn-danger" onclick="db.ref('plans/${c.key}').remove()">X</button></div>`); });
         
-        // Load Cats for Dropdown & List
-        db.ref('categories').on('value',s=>{
-            const sel = document.getElementById('th-cat-sel');
-            const lst = document.getElementById('cat-list');
-            sel.innerHTML = ''; lst.innerHTML='';
-            if(s.exists()) s.forEach(c=>{
-                sel.innerHTML += `<option value="${c.key}">${c.val().name}</option>`;
-                lst.innerHTML += `<div class="card">${c.val().name} <img src="${c.val().image}" style="height:30px; border-radius:4px;"> <button class="btn btn-red" onclick="db.ref('categories/${c.key}').remove()">X</button></div>`;
+        // Expiry Priority View
+        db.ref('subscriptions').on('value',s=>{
+            const e=document.getElementById('expiry-list'); e.innerHTML=''; const arr=[];
+            if(s.exists()){ s.forEach(c => { if(c.val().status === 'active') arr.push({key:c.key,...c.val()}); }); }
+            
+            // Sort by expiry ascending (soonest first), then by username
+            arr.sort((a,b)=> a.expiryDate - b.expiryDate || a.name.localeCompare(b.name));
+            
+            arr.forEach(a=>{ 
+                const days = Math.ceil((a.expiryDate-Date.now())/86400000); 
+                const isUrgent = days < 5;
+                const borderStyle = isUrgent ? 'border: 1px solid var(--danger); box-shadow: 0 0 10px rgba(239, 68, 68, 0.1);' : '';
+                const dayColor = isUrgent ? 'var(--danger)' : 'var(--success)';
+                
+                e.innerHTML+=`
+                <div class="card expiry-item" style="${borderStyle}" data-search="${a.name} ${a.websiteName}">
+                    <div style="display:flex;justify-content:space-between">
+                        <div>
+                            <b>${a.websiteName}</b> (${a.name})<br>
+                            <small>Theme: <span style="color:var(--primary)">${a.selectedThemeName || 'Standard'}</span> | Plan: ${a.planName}</small>
+                        </div>
+                        <div style="text-align:right">
+                            <b style="color:${dayColor}">${days} Days Left</b><br>
+                            ${new Date(a.expiryDate).toLocaleDateString()}
+                        </div>
+                    </div>
+                </div>`; 
             });
         });
-        
-        // Load Themes
-        db.ref('themes').on('value',s=>{
-            const lst = document.getElementById('theme-list'); lst.innerHTML='';
-            if(s.exists()) s.forEach(c=>{
-                lst.innerHTML += `<div class="card">${c.val().name} <a href="${c.val().url}" target="_blank">Link</a> <button class="btn btn-red" onclick="db.ref('themes/${c.key}').remove()">X</button></div>`;
-            });
-        });
-
-        // SUPPORT
-        db.ref('support_chats').limitToLast(50).on('value',s=>{
-            const e=document.getElementById('support-list'); e.innerHTML='';
-            const arr=[]; if(s.exists()) s.forEach(c=>arr.push(c.val()));
-            arr.reverse().forEach(m=>e.innerHTML+=`<div class="card" style="display:block"><div style="display:flex;justify-content:space-between"><b>@${m.username}</b> <small>${new Date(m.timestamp).toLocaleTimeString()}</small></div>${m.message}</div>`);
-        });
-
-        // USERS & PLANS
-        db.ref('users').on('value',s=>{allUsers=[]; s.forEach(c=>allUsers.push({key:c.key,...c.val()})); renderUsers(allUsers);});
-        function renderUsers(l){const e=document.getElementById('user-list');e.innerHTML='';l.forEach(u=>e.innerHTML+=`<div class="card"><div><b style="color:var(--primary)">@${u.key}</b><br>${u.profile?.name}<br>${u.profile?.mobile}</div><button class="btn btn-blue" onclick="openUser('${u.key}')">Manage</button></div>`);}
-        function searchUsers(){const q=document.getElementById('user-search').value.toLowerCase(); renderUsers(allUsers.filter(u=>(u.profile?.name||'').toLowerCase().includes(q)||u.key.includes(q)));}
-        async function openUser(uid){ currentUid=uid; document.getElementById('user-modal').style.display='flex'; const u=allUsers.find(x=>x.key===uid); document.getElementById('m-profile').innerHTML=`User: @${u.key}<br>Pass: ${u.password}`; const p=await db.ref('plans').get(); const sel=document.getElementById('gift-plan'); sel.innerHTML=''; if(p.exists())p.forEach(c=>sel.innerHTML+=`<option value="${c.val().name}|${c.val().days}">${c.val().name}</option>`); loadDetails(uid); }
-        function loadDetails(uid){ db.ref('websites').orderByChild('owner').equalTo(uid).on('value',s=>{const e=document.getElementById('m-webs');e.innerHTML='';if(s.exists())s.forEach(c=>e.innerHTML+=`<div style="background:#000;padding:5px;margin-bottom:5px;">${c.val().name} <button onclick="db.ref('websites/${c.key}').remove()">X</button></div>`)}); }
-        function giftSub(){const[n,d]=document.getElementById('gift-plan').value.split('|'); const s=document.getElementById('gift-site').value; if(s){db.ref('subscriptions').push({uid:currentUid,planName:n,websiteName:s,status:'active',expiryDate:Date.now()+(d*86400000)}); alert("Gifted");}}
-        function closeModal(){document.getElementById('user-modal').style.display='none';}
-
-        function addPlan(){ db.ref('plans').push({name:document.getElementById('pl-n').value,price:document.getElementById('pl-p').value,days:document.getElementById('pl-d').value,desc:document.getElementById('pl-desc').value}); }
-        db.ref('plans').on('value',s=>{const e=document.getElementById('plan-list');e.innerHTML='';if(s.exists())s.forEach(c=>e.innerHTML+=`<div class="card">${c.val().name} <button class="btn btn-red" onclick="db.ref('plans/${c.key}').remove()">X</button></div>`)});
-        function saveSet(){ db.ref('settings/qrCodeUrl').set(document.getElementById('set-qr').value); db.ref('settings/autoFreeUrl').set(document.getElementById('set-auto').value); alert("Saved"); }
-        db.ref('settings').on('value',s=>{if(s.val()){document.getElementById('set-qr').value=s.val().qrCodeUrl||'';document.getElementById('set-auto').value=s.val().autoFreeUrl||'';}});
-
-        // RENEWALS
-        db.ref('renewals').on('value',s=>{const e=document.getElementById('renewal-list');e.innerHTML='';if(s.exists())s.forEach(c=>{const r=c.val();e.innerHTML+=`<div class="card" style="display:block; border-left:3px solid #eab308"><b>RENEW: ${r.websiteName}</b><br>${r.name}<br><button class="btn btn-green" onclick="renew('${c.key}','${r.originalSubId}',${r.durationDays})">Extend</button> <button class="btn btn-red" onclick="db.ref('renewals/${c.key}').remove()">Reject</button></div>`})});
-        async function renew(k,sid,d){ if(confirm("Extend?")){ const sub=await db.ref('subscriptions/'+sid).get(); if(sub.exists()){ let base=Math.max(sub.val().expiryDate,Date.now()); await db.ref('subscriptions/'+sid).update({expiryDate:base+(d*86400000)}); await db.ref('renewals/'+k).remove(); alert("Done"); }}}
+        function filterExpiry(){ const q=document.getElementById('expiry-search').value.toLowerCase(); document.querySelectorAll('.expiry-item').forEach(e=>e.style.display=e.dataset.search.toLowerCase().includes(q)?'block':'none'); }
+        function saveSet(){ db.ref('settings').update({ qrCodeUrl:document.getElementById('set-qr').value, autoFreeUrl:document.getElementById('set-auto').value }); alert("Saved"); }
+        db.ref('settings').on('value',s=>{ if(s.val()){ document.getElementById('set-qr').value=s.val().qrCodeUrl||''; document.getElementById('set-auto').value=s.val().autoFreeUrl||''; } });
+        async function exportData(type){
+            const s = await db.ref(type).once('value');
+            if(!s.exists()) return alert("No data");
+            const d = []; s.forEach(c=>d.push(JSON.stringify(c.val())));
+            const blob = new Blob([d.join('\n')], {type:'text/csv'});
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a'); a.href=url; a.download=type+'.csv'; a.click();
+        }
     </script>
 </body>
 </html>
