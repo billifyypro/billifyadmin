@@ -152,10 +152,9 @@
                     <div class="card">
                         <input id="th-name" placeholder="Theme Name">
                         <select id="th-cat"></select>
-                        <input type="file" id="th-file" style="margin-bottom:10px;">
-                        <input id="th-demo" placeholder="Demo URL">
+                        <input id="th-img-url" placeholder="Screenshot Image URL" style="margin-bottom:10px;">
                         <textarea id="th-desc" placeholder="Description" style="width:100%; height:80px;"></textarea>
-                        <button class="btn btn-primary" onclick="addTheme()">Upload & Add Theme</button>
+                        <button class="btn btn-primary" onclick="addTheme()">Add Theme</button>
                     </div>
                     <div id="theme-list"></div>
                 </div>
@@ -343,18 +342,17 @@
                 });
             });
         }
+        
         async function addTheme(){
-            const n=document.getElementById('th-name').value, c=document.getElementById('th-cat').value, d=document.getElementById('th-demo').value, desc=document.getElementById('th-desc').value;
-            const file = document.getElementById('th-file').files[0];
-            if(!n || !c || !file) return alert("Missing fields");
+            const n=document.getElementById('th-name').value, c=document.getElementById('th-cat').value, desc=document.getElementById('th-desc').value;
+            const imgUrl = document.getElementById('th-img-url').value;
+            if(!n || !c || !imgUrl) return alert("Missing fields");
 
-            const ref = storage.ref('themes/'+Date.now()+'-'+file.name);
-            await ref.put(file);
-            const url = await ref.getDownloadURL();
-
-            db.ref('themes').push({name:n, categoryId:c, demoUrl:d, description:desc, screenshot:url});
+            // REMOVED DEMO URL FROM DB PUSH
+            db.ref('themes').push({name:n, categoryId:c, description:desc, screenshot:imgUrl});
             alert("Theme Added");
         }
+
         function loadThemesList(){
             db.ref('themes').on('value',s=>{
                 const t=document.getElementById('theme-list'); t.innerHTML='';
