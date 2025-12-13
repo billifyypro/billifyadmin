@@ -196,6 +196,7 @@
 
         <div id="pg-expiry" class="page">
             <h2>Subscriptions Monitoring</h2>
+            <p style="color:var(--text-muted); font-size:0.9rem">Sorted by urgency. <span style="color:var(--danger)">Red</span> = Less than 5 days left.</p>
             <input id="expiry-search" placeholder="Filter by user or site..." onkeyup="debounce(filterExpiry, 300)()">
             <div id="expiry-list"><div class="skeleton"></div></div>
         </div>
@@ -252,6 +253,7 @@
         const storage = firebase.storage();
         
         let allUsers=[], currentUid=null, pendingOrdersCount=0, currentChatUser=null;
+        let allThemes=[]; // For dropdowns
 
         window.addEventListener('load', () => { setTimeout(()=>document.getElementById('global-loader').style.opacity='0', 500); setTimeout(()=>document.getElementById('global-loader').remove(), 1000); loadUsers(); initModules(); });
 
@@ -283,7 +285,7 @@
                                     <span class="badge bg-pending">Pending</span> <b style="color:var(--primary)">${o.orderId||'ID-Error'}</b><br>
                                     <div style="margin-top:5px; font-size:1.1rem; font-weight:600;">${o.websiteName}</div>
                                     <small style="color:var(--text-muted)">User: ${o.name} | Plan: ${o.planName} (₹${o.price})</small>
-                                    <br><small style="color:#a855f7">Design: ${o.selectedDesign||'Standard'}</small>
+                                    <br><small style="color:#a855f7">Design: ${o.selectedThemeName||'Standard'}</small>
                                 </div>
                                 <div style="text-align:right">
                                     <div style="font-size:0.9rem; color:var(--text-muted);">${new Date(o.orderDate).toLocaleDateString()}</div>
@@ -356,7 +358,9 @@
         function loadThemesList(){
             db.ref('themes').on('value',s=>{
                 const t=document.getElementById('theme-list'); t.innerHTML='';
+                allThemes = []; // Reset global list for dropdowns
                 if(s.exists()) s.forEach(d=>{
+                    allThemes.push({id: d.key, name: d.val().name});
                     t.innerHTML+=`<div class="card" style="display:flex; gap:10px;"><img src="${d.val().screenshot}" style="width:60px; height:60px; object-fit:cover; border-radius:6px;"><div><b>${d.val().name}</b><br><small onclick="db.ref('themes/${d.key}').remove()" style="color:var(--danger); cursor:pointer;">Delete</small></div></div>`;
                 });
             });
@@ -416,7 +420,7 @@
         }
         function searchUsers(){ const q = document.getElementById('user-search').value.toLowerCase(); const filtered = allUsers.filter(u => u.key.toLowerCase().includes(q) || (u.profile?.name||'').toLowerCase().includes(q) || (u.profile?.mobile||'').includes(q)); renderUsers(filtered); }
 
-        // --- 5. MODALS & EDITING ---
+        // --- 5. MODALS & EDITING (UPDATED FOR THEMES) ---
         async function openUser(uid){
             currentUid = uid;
             const m = document.getElementById('user-modal'); m.style.display = 'flex'; setTimeout(()=>m.classList.add('visible'), 10);
@@ -438,32 +442,84 @@
                     s.forEach(c => {
                         const sub = c.val();
                         const dateVal = new Date(sub.expiryDate).toISOString().split('T')[0];
-                        d.innerHTML += `<div style="border:1px solid var(--border); padding:10px; border-radius:8px; margin-bottom:10px;"><div style="display:flex; justify-content:space-between; margin-bottom:5px;"><b>${sub.websiteName}</b><span class="badge ${sub.status==='active'?'bg-active':'bg-expired'}">${sub.status}</span></div><div style="display:grid; grid-template-columns:1fr 1fr 80px; gap:5px; align-items:center;"><input value="${sub.websiteUrl||''}" id="url-${c.key}" placeholder="URL"><input type="date" value="${dateVal}" id="dt-${c.key}"><button class="btn btn-primary" style="font-size:0.8rem" onclick="updateSub('${c.key}')">Save</button></div></div>`;
+                        // Dropdown logic for themes
+                        let themeOpts = `<option value="${sub.selectedThemeId}" selected>${sub.selectedThemeName || 'Standard'}</option>`;
+                        allThemes.forEach(t => { if(t.id !== sub.selectedThemeId) themeOpts += `<option value="${t.id}">${t.name}</option>`; });
+                        
+                        d.innerHTML += `
+                        <div style="border:1px solid var(--border); padding:10px; border-radius:8px; margin-bottom:10px;">
+                            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
+                                <b>${sub.websiteName}</b>
+                                <span class="badge ${sub.status==='active'?'bg-active':'bg-expired'}">${sub.status}</span>
+                            </div>
+                            <div style="display:grid; grid-template-columns:1fr 1fr; gap:5px; margin-bottom:5px;">
+                                <input value="${sub.websiteUrl||''}" id="url-${c.key}" placeholder="URL">
+                                <input type="date" value="${dateVal}" id="dt-${c.key}">
+                            </div>
+                            <div style="display:flex; gap:5px;">
+                                <select id="th-${c.key}" style="margin:0">${themeOpts}</select>
+                                <button class="btn btn-primary" style="font-size:0.8rem; width:80px;" onclick="updateSub('${c.key}')">Save</button>
+                            </div>
+                        </div>`;
                     });
                 } else d.innerHTML = '<small>No subscriptions found.</small>';
             });
         }
-        function updateSub(k){ const u = document.getElementById('url-'+k).value; const d = document.getElementById('dt-'+k).value; const ts = new Date(d).getTime() + 43200000; db.ref('subscriptions/'+k).update({ websiteUrl:u, expiryDate:ts }); alert("Updated!"); logAdminAction('Updated Subscription', `Key: ${k}, Date: ${d}`); }
+        function updateSub(k){ 
+            const u = document.getElementById('url-'+k).value; 
+            const d = document.getElementById('dt-'+k).value; 
+            const tId = document.getElementById('th-'+k).value;
+            const tSel = document.getElementById('th-'+k);
+            const tName = tSel.options[tSel.selectedIndex].text;
+
+            const ts = new Date(d).getTime() + 43200000; 
+            db.ref('subscriptions/'+k).update({ websiteUrl:u, expiryDate:ts, selectedThemeId: tId, selectedThemeName: tName }); 
+            alert("Updated!"); 
+            logAdminAction('Updated Subscription', `Key: ${k}, Date: ${d}, Theme: ${tName}`); 
+        }
         function giftSub(){
             const n = document.getElementById('gift-plan').value; const d = document.getElementById('gift-d').value || 30; const s = document.getElementById('gift-site').value; const u = document.getElementById('gift-url').value || '#';
             if(!s) return alert("Site Name Required");
-            db.ref('subscriptions').push({ uid: currentUid, name: 'Gifted', planName: n, price: 0, durationDays: d, websiteName: s, websiteUrl: u, status: 'active', expiryDate: Date.now() + (d * 86400000), orderDate: Date.now(), orderId: 'GIFT-'+Math.floor(Math.random()*10000) });
+            db.ref('subscriptions').push({ uid: currentUid, name: 'Gifted', planName: n, price: 0, durationDays: d, websiteName: s, websiteUrl: u, status: 'active', expiryDate: Date.now() + (d * 86400000), orderDate: Date.now(), orderId: 'GIFT-'+Math.floor(Math.random()*10000), selectedThemeName: 'Standard', selectedThemeId: 'default' });
             alert("Gifted Successfully"); logAdminAction('Gifted Sub', `User: ${currentUid}, Plan: ${n}`);
         }
         function closeModal(){ document.getElementById('user-modal').classList.remove('visible'); setTimeout(()=>document.getElementById('user-modal').style.display='none', 300); }
 
-        // --- 6. EXTRAS ---
+        // --- 6. EXTRAS & EXPIRY MONITORING ---
         function updateBadges(){ const b1 = document.getElementById('badge-orders'); b1.style.display = pendingOrdersCount > 0 ? 'inline-block' : 'none'; b1.innerText = pendingOrdersCount; }
         function debounce(func, wait) { let timeout; return function(...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); }; }
         function logAdminAction(action, detail){ db.ref('admin_logs').push({ action:action, details:detail, timestamp:Date.now() }); }
         function addPlan(){ db.ref('plans').push({name:document.getElementById('pl-n').value, price:document.getElementById('pl-p').value, days:document.getElementById('pl-d').value, desc:document.getElementById('pl-desc').value}); document.getElementById('pl-n').value=''; }
         db.ref('plans').on('value', s=>{ document.getElementById('plan-list').innerHTML=''; if(s.exists()) s.forEach(c=>document.getElementById('plan-list').innerHTML+=`<div class="card" style="display:flex; justify-content:space-between"><b>${c.val().name}</b><button class="btn btn-danger" onclick="db.ref('plans/${c.key}').remove()">X</button></div>`); });
-        // Expiry
+        
+        // Expiry Priority View
         db.ref('subscriptions').on('value',s=>{
             const e=document.getElementById('expiry-list'); e.innerHTML=''; const arr=[];
-            if(s.exists()){ s.forEach(c => { arr.push({key:c.key,...c.val()}); }); }
-            arr.sort((a,b)=>a.expiryDate-b.expiryDate);
-            arr.forEach(a=>{ const days = Math.ceil((a.expiryDate-Date.now())/86400000); e.innerHTML+=`<div class="card expiry-item" data-search="${a.name} ${a.websiteName}"><div style="display:flex;justify-content:space-between"><div><b>${a.websiteName}</b> (${a.name})<br><small>Key: ${a.uid}</small></div><div style="text-align:right"><b style="color:${days<5?'var(--danger)':'var(--success)'}">${days} Days</b><br>${new Date(a.expiryDate).toLocaleDateString()}</div></div></div>`; });
+            if(s.exists()){ s.forEach(c => { if(c.val().status === 'active') arr.push({key:c.key,...c.val()}); }); }
+            
+            // Sort by expiry ascending (soonest first), then by username
+            arr.sort((a,b)=> a.expiryDate - b.expiryDate || a.name.localeCompare(b.name));
+            
+            arr.forEach(a=>{ 
+                const days = Math.ceil((a.expiryDate-Date.now())/86400000); 
+                const isUrgent = days < 5;
+                const borderStyle = isUrgent ? 'border: 1px solid var(--danger); box-shadow: 0 0 10px rgba(239, 68, 68, 0.1);' : '';
+                const dayColor = isUrgent ? 'var(--danger)' : 'var(--success)';
+                
+                e.innerHTML+=`
+                <div class="card expiry-item" style="${borderStyle}" data-search="${a.name} ${a.websiteName}">
+                    <div style="display:flex;justify-content:space-between">
+                        <div>
+                            <b>${a.websiteName}</b> (${a.name})<br>
+                            <small>Theme: <span style="color:var(--primary)">${a.selectedThemeName || 'Standard'}</span> | Plan: ${a.planName}</small>
+                        </div>
+                        <div style="text-align:right">
+                            <b style="color:${dayColor}">${days} Days Left</b><br>
+                            ${new Date(a.expiryDate).toLocaleDateString()}
+                        </div>
+                    </div>
+                </div>`; 
+            });
         });
         function filterExpiry(){ const q=document.getElementById('expiry-search').value.toLowerCase(); document.querySelectorAll('.expiry-item').forEach(e=>e.style.display=e.dataset.search.toLowerCase().includes(q)?'block':'none'); }
         function saveSet(){ db.ref('settings').update({ qrCodeUrl:document.getElementById('set-qr').value, autoFreeUrl:document.getElementById('set-auto').value }); alert("Saved"); }
