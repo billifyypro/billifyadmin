@@ -188,6 +188,10 @@
                     <input id="pl-d" placeholder="Duration (Days)">
                     <input id="pl-desc" placeholder="Description">
                 </div>
+                <div style="margin:10px 0; display:flex; align-items:center; gap:8px;">
+                    <input type="checkbox" id="pl-promo" style="width:20px; height:20px; margin:0;">
+                    <label for="pl-promo" style="cursor:pointer; font-weight:500;">Enable Almost Free First Month (₹19)</label>
+                </div>
                 <button class="btn btn-primary" onclick="addPlan()">Add Plan</button>
             </div>
             <div id="plan-list"><div class="skeleton"></div></div>
@@ -487,8 +491,29 @@
         function updateBadges(){ const b1 = document.getElementById('badge-orders'); b1.style.display = pendingOrdersCount > 0 ? 'inline-block' : 'none'; b1.innerText = pendingOrdersCount; }
         function debounce(func, wait) { let timeout; return function(...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); }; }
         function logAdminAction(action, detail){ db.ref('admin_logs').push({ action:action, details:detail, timestamp:Date.now() }); }
-        function addPlan(){ db.ref('plans').push({name:document.getElementById('pl-n').value, price:document.getElementById('pl-p').value, days:document.getElementById('pl-d').value, desc:document.getElementById('pl-desc').value}); document.getElementById('pl-n').value=''; }
-        db.ref('plans').on('value', s=>{ document.getElementById('plan-list').innerHTML=''; if(s.exists()) s.forEach(c=>document.getElementById('plan-list').innerHTML+=`<div class="card" style="display:flex; justify-content:space-between"><b>${c.val().name}</b><button class="btn btn-danger" onclick="db.ref('plans/${c.key}').remove()">X</button></div>`); });
+        
+        // ADD PLAN WITH ALMOST FREE FLAG
+        function addPlan(){ 
+            const isPromo = document.getElementById('pl-promo').checked;
+            db.ref('plans').push({
+                name:document.getElementById('pl-n').value, 
+                price:document.getElementById('pl-p').value, 
+                days:document.getElementById('pl-d').value, 
+                desc:document.getElementById('pl-desc').value,
+                almostFree: isPromo
+            }); 
+            document.getElementById('pl-n').value=''; 
+            document.getElementById('pl-promo').checked = false;
+        }
+        
+        db.ref('plans').on('value', s=>{ 
+            document.getElementById('plan-list').innerHTML=''; 
+            if(s.exists()) s.forEach(c=>{
+                const v = c.val();
+                let promoBadge = v.almostFree ? '<span style="color:var(--warning); font-size:0.8rem; margin-left:5px;">(₹19 Offer)</span>' : '';
+                document.getElementById('plan-list').innerHTML+=`<div class="card" style="display:flex; justify-content:space-between"><div><b>${v.name}</b> ${promoBadge}</div><button class="btn btn-danger" onclick="db.ref('plans/${c.key}').remove()">X</button></div>`;
+            }); 
+        });
         
         // Expiry Priority View
         db.ref('subscriptions').on('value',s=>{
