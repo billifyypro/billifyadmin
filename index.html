@@ -99,6 +99,7 @@
         <div class="nav-item" onclick="tab('support')"><i class="fa-solid fa-headset"></i> Support</div>
         <div class="nav-item" onclick="tab('users')"><i class="fa-solid fa-users"></i> Users</div>
         <div class="nav-item" onclick="tab('plans')"><i class="fa-solid fa-tags"></i> Plans</div>
+        <div class="nav-item" onclick="tab('offers')"><i class="fa-solid fa-bullhorn"></i> Offers</div>
         <div class="nav-item" onclick="tab('expiry')"><i class="fa-solid fa-calendar-xmark"></i> Expiry</div> 
         <div class="nav-item" onclick="tab('settings')"><i class="fa-solid fa-gear"></i> Settings</div>
     </div>
@@ -188,6 +189,7 @@
                     <input id="pl-d" placeholder="Duration (Days)">
                     <input id="pl-desc" placeholder="Description">
                 </div>
+                <textarea id="pl-feat" placeholder="Features (One per line)" style="width:100%; height:80px; margin-top:5px; margin-bottom:10px;"></textarea>
                 <div style="margin:10px 0; display:flex; align-items:center; gap:8px;">
                     <input type="checkbox" id="pl-promo" style="width:20px; height:20px; margin:0;">
                     <label for="pl-promo" style="cursor:pointer; font-weight:500;">Enable Almost Free First Month (₹19)</label>
@@ -195,6 +197,17 @@
                 <button class="btn btn-primary" onclick="addPlan()">Add Plan</button>
             </div>
             <div id="plan-list"><div class="skeleton"></div></div>
+        </div>
+
+        <div id="pg-offers" class="page">
+            <h2>Offers & Banners</h2>
+            <div class="card" style="max-width:600px">
+                <h4>Add New Offer</h4>
+                <input id="off-img" placeholder="Banner Image URL">
+                <input id="off-link" placeholder="Redirect Link (https://...)">
+                <button class="btn btn-primary" onclick="addOffer()">Save Offer</button>
+            </div>
+            <div id="offers-list" class="grid-stats"></div>
         </div>
 
         <div id="pg-expiry" class="page">
@@ -264,12 +277,12 @@
             document.querySelectorAll('.page').forEach(p=>p.classList.remove('active')); 
             document.querySelectorAll('.nav-item').forEach(n=>n.classList.remove('active')); 
             document.getElementById('pg-'+id).classList.add('active'); 
-            const icons = ['orders','renewals','themes','support','users','plans','expiry','settings'];
+            const icons = ['orders','renewals','themes','support','users','plans','offers','expiry','settings'];
             const idx = icons.indexOf(id);
             if(idx > -1) document.querySelectorAll('.nav-item')[idx].classList.add('active');
         }
 
-        function initModules(){ loadThemeCats(); loadThemesList(); loadSupportUsers(); }
+        function initModules(){ loadThemeCats(); loadThemesList(); loadSupportUsers(); loadOffers(); }
 
         // --- 1. ORDERS & RENEWALS ---
         db.ref('subscriptions').on('value', s => {
@@ -492,18 +505,21 @@
         function debounce(func, wait) { let timeout; return function(...args) { clearTimeout(timeout); timeout = setTimeout(() => func.apply(this, args), wait); }; }
         function logAdminAction(action, detail){ db.ref('admin_logs').push({ action:action, details:detail, timestamp:Date.now() }); }
         
-        // ADD PLAN WITH ALMOST FREE FLAG
+        // ADD PLAN WITH ALMOST FREE FLAG & FEATURES
         function addPlan(){ 
             const isPromo = document.getElementById('pl-promo').checked;
+            const feats = document.getElementById('pl-feat').value.split('\n').filter(x=>x.trim()!=='');
             db.ref('plans').push({
                 name:document.getElementById('pl-n').value, 
                 price:document.getElementById('pl-p').value, 
                 days:document.getElementById('pl-d').value, 
                 desc:document.getElementById('pl-desc').value,
-                almostFree: isPromo
+                almostFree: isPromo,
+                features: feats
             }); 
             document.getElementById('pl-n').value=''; 
             document.getElementById('pl-promo').checked = false;
+            document.getElementById('pl-feat').value = '';
         }
         
         db.ref('plans').on('value', s=>{ 
@@ -544,6 +560,29 @@
                 </div>`; 
             });
         });
+
+        // --- OFFERS MANAGEMENT ---
+        function addOffer(){
+            const img = document.getElementById('off-img').value;
+            const link = document.getElementById('off-link').value;
+            if(!img || !link) return alert("All fields required");
+            db.ref('offers').push({imageUrl:img, linkUrl:link});
+            document.getElementById('off-img').value=''; document.getElementById('off-link').value='';
+        }
+        function loadOffers(){
+            db.ref('offers').on('value', s=>{
+                const d = document.getElementById('offers-list'); d.innerHTML='';
+                if(s.exists()) s.forEach(c=>{
+                    d.innerHTML+=`
+                    <div class="card" style="padding:10px;">
+                        <img src="${c.val().imageUrl}" style="width:100%; height:100px; object-fit:cover; border-radius:6px; margin-bottom:5px;">
+                        <small style="display:block; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; margin-bottom:5px;">${c.val().linkUrl}</small>
+                        <button class="btn btn-danger" style="width:100%; font-size:0.8rem; padding:4px;" onclick="db.ref('offers/${c.key}').remove()">Remove</button>
+                    </div>`;
+                });
+            });
+        }
+
         function filterExpiry(){ const q=document.getElementById('expiry-search').value.toLowerCase(); document.querySelectorAll('.expiry-item').forEach(e=>e.style.display=e.dataset.search.toLowerCase().includes(q)?'block':'none'); }
         function saveSet(){ db.ref('settings').update({ qrCodeUrl:document.getElementById('set-qr').value, autoFreeUrl:document.getElementById('set-auto').value }); alert("Saved"); }
         db.ref('settings').on('value',s=>{ if(s.val()){ document.getElementById('set-qr').value=s.val().qrCodeUrl||''; document.getElementById('set-auto').value=s.val().autoFreeUrl||''; } });
